@@ -3,6 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 import time
 # Tkinter GUI for the data needed to start scraping
 # Global variables
@@ -50,22 +52,32 @@ def scraping_data():
     time.sleep(1)
     selection_rooms_up_to = Select(driver.find_element(By.XPATH, "//*[@id='numBedsTo']"))
     selection_rooms_up_to.select_by_value(num_rooms)
+    places_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/h1")
+    numbers_of_places = int(places_element.text.split()[0])
+    total_pages = numbers_of_places/20
+    if
+    for page in range(1, total_pages +1):
     list_elements = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")
     time.sleep(2)
     list_of_urls = []
     for i in range(len(list_elements)):
         current_element = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")[i]
         current_element.click()
+        time.sleep(2)
+        if i == 0:
+            address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h1")
+            rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[3]/p[2]")
+        else:
+            address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/h1")
+            rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h2")
+
         url = driver.current_url
         list_of_urls.append(url)
         print(url)
-        address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/h1")
         address = address_element.text
         print(address)
-        rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h2")
         rent = rent_element.text
         print(rent)
-        time.sleep(1.5)
         driver.back()
         time.sleep(2)
 
