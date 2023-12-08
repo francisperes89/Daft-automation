@@ -55,11 +55,10 @@ def scraping_data():
     places_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/h1")
     numbers_of_places = int(places_element.text.split()[0])
     total_pages = numbers_of_places/20
-    if
-    for page in range(1, total_pages +1):
     list_elements = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")
     time.sleep(2)
     list_of_urls = []
+  
     for i in range(len(list_elements)):
         current_element = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")[i]
         current_element.click()
@@ -80,18 +79,13 @@ def scraping_data():
         print(rent)
         driver.back()
         time.sleep(2)
-
-
-
-
-
-
-    # Here you can do whatever you want with the data, like printing it to the console
-    print("Location:", location)
-    print("Rent Value:", rent_value)
-    print("Number of Rooms:", num_rooms)
-    print("message:", message)
-
+        if i == len(list_elements) - 1:
+            try:
+                next_page = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[2]/div/div[6]/button/div/span")
+                next_page.click()
+            except:
+                break
+    driver.quit()
 
 # Create the main window
 window = tk.Tk()
