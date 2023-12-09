@@ -5,6 +5,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 import time
 # Tkinter GUI for the data needed to start scraping
 # Global variables
@@ -52,40 +53,57 @@ def scraping_data():
     time.sleep(1)
     selection_rooms_up_to = Select(driver.find_element(By.XPATH, "//*[@id='numBedsTo']"))
     selection_rooms_up_to.select_by_value(num_rooms)
-    places_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/h1")
-    numbers_of_places = int(places_element.text.split()[0])
-    total_pages = numbers_of_places/20
-    list_elements = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")
-    time.sleep(2)
-    list_of_urls = []
-  
-    for i in range(len(list_elements)):
-        current_element = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")[i]
-        current_element.click()
+    still_have_items = True
+    while still_have_items:
+        list_elements = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")
         time.sleep(2)
-        if i == 0:
-            address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h1")
-            rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[3]/p[2]")
-        else:
-            address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/h1")
-            rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h2")
+        list_of_urls = []
+        list_of_addresses = []
+        list_of_rent_prices = []
+        number_of_items = int(driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/h1").text.split()[0])
+        total_pages = number_of_items // 20
+        if number_of_items % 20 != 0:
+            total_pages += 1
+        for current_page in range(total_pages):
 
-        url = driver.current_url
-        list_of_urls.append(url)
-        print(url)
-        address = address_element.text
-        print(address)
-        rent = rent_element.text
-        print(rent)
-        driver.back()
-        time.sleep(2)
-        if i == len(list_elements) - 1:
-            try:
-                next_page = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[2]/div/div[6]/button/div/span")
+            for i in range(len(list_elements)):
+                current_element = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")[i]
+                current_element.click()
+                time.sleep(2)
+                if i == 0:
+                    try:
+                        address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h1")
+                        rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[3]/p[2]")
+                    except NoSuchElementException:
+                        address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/h1")
+                        rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h2")
+                else:
+                    address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/h1")
+                    rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h2")
+                url = driver.current_url
+                list_of_urls.append(url)
+                print(url)
+                address = address_element.text
+                list_of_addresses.append(address)
+                print(address)
+                rent = rent_element.text
+                list_of_rent_prices.append(rent)
+                print(rent)
+                driver.back()
+                time.sleep(2)
+            if current_page < total_pages - 1:
+                next_page = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[2]/div/div[4]/button")
                 next_page.click()
-            except:
-                break
-    driver.quit()
+                print("next page")
+                time.sleep(2)
+            else:
+                still_have_items = False
+        print(list_of_addresses)
+        print(list_of_rent_prices)
+        print(list_of_urls)
+
+
+        # driver.quit()
 
 # Create the main window
 window = tk.Tk()
@@ -123,8 +141,6 @@ button_get_data.pack()
 # Start the main loop of the GUI
 window.mainloop()
 
-
-# fazer scraping do site daft e conforme encontrar imoveis com dados retirados fazer aplicacao
 
 
 # se as aplicacoes foram feitas com sucesso salvar em uma planilha
