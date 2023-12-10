@@ -6,6 +6,8 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
+import openpyxl
+from datetime import datetime
 import time
 # Tkinter GUI for the data needed to start scraping
 # Global variables
@@ -15,10 +17,24 @@ num_rooms = ""
 message = ""
 email = ""
 password = ""
+first_name = ""
+last_name = ""
+current_date = datetime.now()
+today = current_date.strftime("%d-%m-%Y")
+# Creating the sheet
+workbook = openpyxl.Workbook()
+sheet = workbook.active
+# Adicionar cabeçalhos
+sheet['A1'] = 'Date'
+sheet['B1'] = 'URL'
+sheet['C1'] = 'Address'
+sheet['D1'] = 'Rent'
 
 
 def get_data():
-    global location, rent_value, num_rooms, message, email, password
+    global location, rent_value, num_rooms, message, email, password, first_name, last_name
+    first_name = entry_name.get()
+    last_name = entry_last_name.get()
     email = entry_email.get()
     password = entry_password.get()
     location = entry_location.get()
@@ -31,7 +47,7 @@ def get_data():
 
 
 def scraping_data():
-    global rent_value, num_rooms
+    global rent_value, num_rooms, message
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_experimental_option("detach", True)
     driver = webdriver.Chrome(options=chrome_options)
@@ -94,6 +110,7 @@ def scraping_data():
                 else:
                     address_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/h1")
                     rent_element = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[1]/div/div[2]/div[1]/h2")
+
                 url = driver.current_url
                 list_of_urls.append(url)
                 print(url)
@@ -103,8 +120,45 @@ def scraping_data():
                 rent = rent_element.text
                 list_of_rent_prices.append(rent)
                 print(rent)
-                driver.back()
-                time.sleep(2)
+                new_row = sheet.max_row + 1  # Find the new empty row
+                sheet[f'A{new_row}'] = today
+                sheet[f'B{new_row}'] = url
+                sheet[f'C{new_row}'] = address
+                sheet[f'D{new_row}'] = rent
+                if message.strip() != "":
+                    email_button = driver.find_element(By.XPATH,
+                                                       "//*[@id='__next']/main/div[3]/div[2]/div/div[1]/div[2]/div[2]/button/div/span")
+                    email_button.click()
+                    time.sleep(0.7)
+                    name_entry = driver.find_element(By.XPATH, "//*[@id='keyword1']")
+                    name_entry.send_keys(first_name)
+                    time.sleep(0.7)
+                    last_name_entry = driver.find_element(By.XPATH, "//*[@id='keyword2']")
+                    last_name_entry.send_keys(last_name)
+                    time.sleep(0.7)
+                    text_box = driver.find_element(By.XPATH, "//*[@id='message']")
+                    current_message = text_box.get_attribute("value")
+                    if current_message:
+                        time.sleep(0.7)
+                        print(current_message)
+                        text_box.click()
+                        text_box.clear()
+                        time.sleep(0.7)
+                        text_box.send_keys(message)
+                        # send_button = driver.find_element(By.XPATH, "//*[@id='contact-form-modal']/div[2]/form/div/div[9]/div/button")
+                        # send_button.click()
+                        # time.sleep(0.7)
+                    else:
+                        print("The box is empty!")
+                        text_box.send_keys(message)
+                        # send_button = driver.find_element(By.XPATH, "//*[@id='contact-form-modal']/div[2]/form/div/div[9]/div/button")
+                        # send_button.click()
+                        # time.sleep(0.7)
+                    driver.back()
+                    time.sleep(2)
+                else:
+                    driver.back()
+                    time.sleep(2)
             if current_page < total_pages - 1:
                 next_page = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[3]/div[1]/div[2]/div/div[4]/button")
                 next_page.click()
@@ -112,6 +166,8 @@ def scraping_data():
                 time.sleep(2)
             else:
                 still_have_items = False
+        # Saving the file
+        workbook.save("daft-scraping.xlsx")
         print(list_of_addresses)
         print(list_of_rent_prices)
         print(list_of_urls)
@@ -119,12 +175,23 @@ def scraping_data():
 
         # driver.quit()
 
+
 # Create the main window
 window = tk.Tk()
 window.title("Daft Rental Form")
-window.geometry("500x600")
+window.geometry("600x800")
 
 # Labels and entries
+# Name
+label_name = tk.Label(window, text="First Name:")
+label_name.pack()
+entry_name = tk.Entry(window)
+entry_name.pack()
+# Last name
+label_last_name = tk.Label(window, text="Last Name:")
+label_last_name.pack()
+entry_last_name = tk.Entry(window)
+entry_last_name.pack()
 # Email
 label_email = tk.Label(window, text="Email:")
 label_email.pack()
