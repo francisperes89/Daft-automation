@@ -13,10 +13,14 @@ location = ""
 rent_value = ""
 num_rooms = ""
 message = ""
+email = ""
+password = ""
 
 
 def get_data():
-    global location, rent_value, num_rooms, message
+    global location, rent_value, num_rooms, message, email, password
+    email = entry_email.get()
+    password = entry_password.get()
     location = entry_location.get()
     rent_value = entry_rent_value.get()
     num_rooms = entry_num_rooms.get()
@@ -37,6 +41,18 @@ def scraping_data():
     cookie_accept = driver.find_element(By.XPATH, "//*[@id='didomi-notice-agree-button']")
     cookie_accept.click()
     time.sleep(0.7)
+    sign_in = driver.find_element(By.XPATH, "//*[@id='__next']/div[2]/header/div/div[2]/div[3]/ul/li/a")
+    sign_in.click()
+    time.sleep(2)
+    email_input = driver.find_element(By.XPATH, "//*[@id='username']")
+    email_input.send_keys(email)
+    time.sleep(0.7)
+    password_input = driver.find_element(By.XPATH, "//*[@id='password']")
+    password_input.send_keys(password)
+    time.sleep(0.7)
+    sign_in_button = driver.find_element(By.XPATH, "//*[@id='login']")
+    sign_in_button.click()
+    time.sleep(2)
     location_input = driver.find_element(By.XPATH, "//*[@id='search-box-input']")
     location_input.send_keys(location)
     time.sleep(0.7)
@@ -51,12 +67,10 @@ def scraping_data():
     rooms_button = driver.find_element(By.XPATH, "//*[@id='__next']/main/div[1]/div/div[2]/div[2]/div[1]/button")
     rooms_button.click()
     time.sleep(1)
-    selection_rooms_up_to = Select(driver.find_element(By.XPATH, "//*[@id='numBedsTo']"))
-    selection_rooms_up_to.select_by_value(num_rooms)
+    selection_rooms_from = Select(driver.find_element(By.XPATH, "//*[@id='numBedsFrom']"))
+    selection_rooms_from.select_by_value(num_rooms)
     still_have_items = True
     while still_have_items:
-        list_elements = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")
-        time.sleep(2)
         list_of_urls = []
         list_of_addresses = []
         list_of_rent_prices = []
@@ -65,7 +79,7 @@ def scraping_data():
         if number_of_items % 20 != 0:
             total_pages += 1
         for current_page in range(total_pages):
-
+            list_elements = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")
             for i in range(len(list_elements)):
                 current_element = driver.find_elements(By.CSS_SELECTOR, "ul li a div div .fKxuMi")[i]
                 current_element.click()
@@ -111,6 +125,16 @@ window.title("Daft Rental Form")
 window.geometry("500x600")
 
 # Labels and entries
+# Email
+label_email = tk.Label(window, text="Email:")
+label_email.pack()
+entry_email = tk.Entry(window)
+entry_email.pack()
+# Password
+label_password = tk.Label(window, text="Password:")
+label_password.pack()
+entry_password = tk.Entry(window, show="*")
+entry_password.pack()
 # Location
 label_location = tk.Label(window, text="Location:")
 label_location.pack()
@@ -122,7 +146,7 @@ label_rent_value.pack()
 entry_rent_value = tk.Entry(window)
 entry_rent_value.pack()
 # Number of rooms up to
-label_num_rooms = tk.Label(window, text="Number of Rooms:")
+label_num_rooms = tk.Label(window, text="Number of Rooms(min):")
 label_num_rooms.pack()
 entry_num_rooms = tk.Entry(window)
 entry_num_rooms.pack()
